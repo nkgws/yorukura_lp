@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STYLYキャンペーンサンプル</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #2980b9;
+        }
+
+        .button.secondary {
+            background-color: #95a5a6;
+        }
+
+        .button.secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .info-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>STYLYキャンペーンページ</h1>
+
+        <button class="button" onclick="playScene()">STYLYシーンを再生</button>
+
+        <!-- 音楽再生ボタン追加 -->
+        <button class="button" id="musicBtn" onclick="toggleMusic()">音楽を再生</button>
+
+        <button class="button" onclick="openCamera()">カメラを起動</button>
+
+        <button class="button" onclick="saveData()">データを保存</button>
+
+        <button class="button" onclick="loadData()">データを読み込み</button>
+
+        <button class="button secondary" onclick="getNetworkInfo()">ネットワーク情報を取得</button>
+
+        <button class="button secondary" onclick="goToStyly()">STYLYへ移動</button>
+
+        <button class="button secondary" onclick="goToSatch()">SATCHトップへ移動</button>
+
+        <div id="status" class="status"></div>
+        <!-- 音楽ファイルのaudioタグ（非表示） -->
+        <audio id="bgm" src="voice.mp3" loop></audio>
+    </div>
+
+    <script type="application/javascript" src="./v0.0.6.js"></script>
+    <script>
+        // ステータス表示関数
+        function showStatus(message) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // STYLYシーンを再生
+        function playScene() {
+            const sceneId = '72ed78bf-9fbe-4c37-b573-33d9536673d1';
+            if (sceneId && window.StylyMobilePartnerLibrary) {
+                window.StylyMobilePartnerLibrary.scene.play(sceneId);
+                showStatus(`シーン ${sceneId} を再生します`);
+            }
+        }
+
+        // 音楽再生/停止切り替え
+        function toggleMusic() {
+            const audio = document.getElementById('bgm');
+            const btn = document.getElementById('musicBtn');
+            if (audio.paused) {
+                audio.play();
+                btn.textContent = '音楽を停止';
+                showStatus('音楽を再生します');
+            } else {
+                audio.pause();
+                btn.textContent = '音楽を再生';
+                showStatus('音楽を停止しました');
+            }
+        }
+
+        // カメラを起動
+        function openCamera() {
+            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.camera) {
+                window.StylyMobilePartnerLibrary.camera.open();
+                showStatus('カメラを起動しています...');
+            }
+        }
+
+        // データを保存
+        function saveData() {
+            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.storage) {
+                const key = prompt('保存するキーを入力してください:');
+                const value = prompt('保存する値を入力してください:');
+                if (key && value) {
+                    window.StylyMobilePartnerLibrary.storage.save('campaign_sample', key, value);
+                    showStatus(`${key} にデータを保存しました`);
+                }
+            }
+        }
+
+        // データを読み込み
+        function loadData() {
+            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.storage) {
+                const key = prompt('読み込むキーを入力してください:');
+                if (key) {
+                    const value = window.StylyMobilePartnerLibrary.storage.load('campaign_sample', key);
+                    showStatus(`${key} のデータ: ${value || '見つかりません'}`);
+                }
+            }
+        }
+
+        // ネットワーク情報を取得
+        function getNetworkInfo() {
+            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.util) {
+                const info = window.StylyMobilePartnerLibrary.util.getNetworkInfo();
+                showStatus(`ネットワークタイプ: ${info.type}`);
+            }
+        }
+
+        // STYLYへ移動
+        function goToStyly() {
+            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.util) {
+                window.StylyMobilePartnerLibrary.util.goToStyly();
+                showStatus('STYLYへ移動します...');
+            }
+        }
+
+        // SATCHトップへ移動
+        function goToSatch() {
+            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.util) {
+                window.StylyMobilePartnerLibrary.util.goToSatch();
+                showStatus('SATCHトップへ移動します...');
+            }
+        }
+
+        // ライブラリのロード確認
+        window.addEventListener('load', () => {
+            if (!window.StylyMobilePartnerLibrary) {
+                alert('StylyMobilePartnerLibraryが読み込まれていません。v0.0.6.jsを配置してください。');
+            }
+        });
+    </script>
+</body>
+
+</html>
