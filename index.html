@@ -127,10 +127,13 @@
         }
 
         function encodeMediaPath(path) {
-            return path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+            return path
+                .split('/')
+                .map(segment => encodeURIComponent(segment))
+                .join('/');
         }
 
-        // 音声を再生
+        // 音声を再生（同一ボタンクリックで停止）
         function playAudio(src, label) {
             const audio = document.getElementById('audioPlayer');
             if (!audio) {
@@ -138,16 +141,23 @@
                 return;
             }
 
-            const currentSrc = audio.getAttribute('data-current-src');
+            const currentSrc = audio.dataset.currentSrc;
+            const encodedSrc = encodeMediaPath(src);
+
+            // 同じ音声が再生中なら停止
+            if (currentSrc === src && !audio.paused && !audio.ended) {
+                audio.pause();
+                audio.currentTime = 0;
+                showStatus(`${label} を停止しました`);
+                return;
+            }
+
             if (currentSrc !== src) {
                 audio.pause();
                 audio.currentTime = 0;
-                audio.src = encodeMediaPath(src);
-                audio.load();
-                audio.setAttribute('data-current-src', src);
-            } else {
-                audio.pause();
-                audio.currentTime = 0;
+                audio.src = new URL(encodedSrc, window.location.href).toString();
+                audio.dataset.currentSrc = src;
+                audio.dataset.currentLabel = label;
             }
 
             audio.play()
@@ -155,7 +165,7 @@
                     showStatus(`${label} を再生します`);
                 })
                 .catch(() => {
-                    showStatus('音声を再生できませんでした');
+                    showStatus(`${label} を再生できませんでした`);
                 });
         }
 
@@ -163,6 +173,14 @@
         window.addEventListener('load', () => {
             if (!window.StylyMobilePartnerLibrary) {
                 alert('StylyMobilePartnerLibraryが読み込まれていません。v0.0.6.jsを配置してください。');
+            }
+
+            const audioEl = document.getElementById('audioPlayer');
+            if (audioEl) {
+                audioEl.addEventListener('error', () => {
+                    const label = audioEl.dataset.currentLabel || '音声';
+                    showStatus(`${label} を再生できませんでした`);
+                });
             }
         });
     </script>
