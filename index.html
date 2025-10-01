@@ -29,6 +29,13 @@
             margin-bottom: 30px;
         }
 
+        .section-title {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-size: 20px;
+            color: #34495e;
+        }
+
         .button {
             display: block;
             width: 100%;
@@ -76,26 +83,25 @@
     <div class="container">
         <h1>STYLYキャンペーンページ</h1>
 
-        <button class="button" onclick="playScene()">STYLYシーンを再生</button>
+        <h2 class="section-title">カテゴリ：ARシーン</h2>
+        <button class="button" onclick="playStylyScene('a13ca1d3-fc78-4838-8bb9-1859eb75cb76', '認証・一括DL')">認証・一括DL</button>
+        <button class="button" onclick="playStylyScene('c2972b35-e2a3-4105-861c-c6bd80946b83', 'AR1話（4人）')">AR1話（4人）</button>
+        <button class="button" onclick="playStylyScene('df7bc80a-f50d-4301-8ba4-d441d5d06d7f', 'AR2話（まひる・キウイ）')">AR2話（まひる・キウイ）</button>
+        <button class="button" onclick="playStylyScene('2aafb13d-9bcd-4456-b0a7-2fdfac229952', 'AR3話（花音・めい）')">AR3話（花音・めい）</button>
+        <button class="button" onclick="playStylyScene('649155b9-9d5a-44be-9d69-5084ae3f5f0b', 'AR4話（花音・まひる）')">AR4話（花音・まひる）</button>
+        <button class="button" onclick="playStylyScene('ce1bb10c-06ce-4637-ac31-1907e6763278', 'AR5話（ライブ）')">AR5話（ライブ）</button>
+        <button class="button" onclick="playStylyScene('ddaefbbd-4f0e-4065-958c-5b84f3facaa6', '有料版撮影シーン')">有料版撮影シーン</button>
+        <button class="button" onclick="playStylyScene('3d20da61-e57c-4013-9ee0-31aa1777620e', '無料版撮影シーン')">無料版撮影シーン</button>
 
-        <!-- 音楽再生ボタン追加 -->
-        <button class="button" id="musicBtn" onclick="toggleMusic()">音楽を再生</button>
-
-        <button class="button" onclick="openCamera()">カメラを起動</button>
-
-        <button class="button" onclick="saveData()">データを保存</button>
-
-        <button class="button" onclick="loadData()">データを読み込み</button>
-
-        <button class="button secondary" onclick="getNetworkInfo()">ネットワーク情報を取得</button>
-
-        <button class="button secondary" onclick="goToStyly()">STYLYへ移動</button>
-
-        <button class="button secondary" onclick="goToSatch()">SATCHトップへ移動</button>
+        <h2 class="section-title">カテゴリ：音声</h2>
+        <button class="button secondary" onclick="playAudio('Voice/250925_ヨルクラ_AR体験_ScapeStory_#1_音声コンテンツ01_プロローグ_MIX.wav', '音声コンテンツ01 プロローグ')">音声コンテンツ01 プロローグ</button>
+        <button class="button secondary" onclick="playAudio('Voice/250925_ヨルクラ_AR体験_ScapeStory_#3_音声コンテンツ02_MIX.wav', '音声コンテンツ02')">音声コンテンツ02</button>
+        <button class="button secondary" onclick="playAudio('Voice/250925_ヨルクラ_AR体験_ScapeStory_#4_音声コンテンツ03_MIX.wav', '音声コンテンツ03')">音声コンテンツ03</button>
+        <button class="button secondary" onclick="playAudio('Voice/250925_ヨルクラ_AR体験_ScapeStory_#6_音声コンテンツ04_MIX.wav', '音声コンテンツ04')">音声コンテンツ04</button>
+        <button class="button secondary" onclick="playAudio('Voice/250925_ヨルクラ_AR体験_ScapeStory_#7音声コンテンツ_05_MIX.wav', '音声コンテンツ05')">音声コンテンツ05</button>
 
         <div id="status" class="status"></div>
-        <!-- 音楽ファイルのaudioタグ（非表示） -->
-        <audio id="bgm" src="voice.mp3" loop></audio>
+        <audio id="audioPlayer" preload="auto"></audio>
     </div>
 
     <script type="application/javascript" src="./v0.0.6.js"></script>
@@ -111,82 +117,46 @@
         }
 
         // STYLYシーンを再生
-        function playScene() {
-            const sceneId = '72ed78bf-9fbe-4c37-b573-33d9536673d1';
-            if (sceneId && window.StylyMobilePartnerLibrary) {
+        function playStylyScene(sceneId, label) {
+            if (sceneId && window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.scene) {
                 window.StylyMobilePartnerLibrary.scene.play(sceneId);
-                showStatus(`シーン ${sceneId} を再生します`);
+                showStatus(`${label} を再生します`);
+            } else {
+                showStatus('StylyMobilePartnerLibraryが利用できません');
             }
         }
 
-        // 音楽再生/停止切り替え
-        function toggleMusic() {
-            const audio = document.getElementById('bgm');
-            const btn = document.getElementById('musicBtn');
-            if (audio.paused) {
-                audio.play();
-                btn.textContent = '音楽を停止';
-                showStatus('音楽を再生します');
+        function encodeMediaPath(path) {
+            return path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+        }
+
+        // 音声を再生
+        function playAudio(src, label) {
+            const audio = document.getElementById('audioPlayer');
+            if (!audio) {
+                showStatus('音声プレイヤーが見つかりません');
+                return;
+            }
+
+            const currentSrc = audio.getAttribute('data-current-src');
+            if (currentSrc !== src) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.src = encodeMediaPath(src);
+                audio.load();
+                audio.setAttribute('data-current-src', src);
             } else {
                 audio.pause();
-                btn.textContent = '音楽を再生';
-                showStatus('音楽を停止しました');
+                audio.currentTime = 0;
             }
-        }
 
-        // カメラを起動
-        function openCamera() {
-            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.camera) {
-                window.StylyMobilePartnerLibrary.camera.open();
-                showStatus('カメラを起動しています...');
-            }
-        }
-
-        // データを保存
-        function saveData() {
-            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.storage) {
-                const key = prompt('保存するキーを入力してください:');
-                const value = prompt('保存する値を入力してください:');
-                if (key && value) {
-                    window.StylyMobilePartnerLibrary.storage.save('campaign_sample', key, value);
-                    showStatus(`${key} にデータを保存しました`);
-                }
-            }
-        }
-
-        // データを読み込み
-        function loadData() {
-            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.storage) {
-                const key = prompt('読み込むキーを入力してください:');
-                if (key) {
-                    const value = window.StylyMobilePartnerLibrary.storage.load('campaign_sample', key);
-                    showStatus(`${key} のデータ: ${value || '見つかりません'}`);
-                }
-            }
-        }
-
-        // ネットワーク情報を取得
-        function getNetworkInfo() {
-            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.util) {
-                const info = window.StylyMobilePartnerLibrary.util.getNetworkInfo();
-                showStatus(`ネットワークタイプ: ${info.type}`);
-            }
-        }
-
-        // STYLYへ移動
-        function goToStyly() {
-            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.util) {
-                window.StylyMobilePartnerLibrary.util.goToStyly();
-                showStatus('STYLYへ移動します...');
-            }
-        }
-
-        // SATCHトップへ移動
-        function goToSatch() {
-            if (window.StylyMobilePartnerLibrary && window.StylyMobilePartnerLibrary.util) {
-                window.StylyMobilePartnerLibrary.util.goToSatch();
-                showStatus('SATCHトップへ移動します...');
-            }
+            audio.play()
+                .then(() => {
+                    showStatus(`${label} を再生します`);
+                })
+                .catch(() => {
+                    showStatus('音声を再生できませんでした');
+                });
         }
 
         // ライブラリのロード確認
